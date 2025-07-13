@@ -1,0 +1,19 @@
+[{
+  "_id": {
+    "$oid": "685be8132564aa40a103b8b4"
+  },
+  "empId": "001",
+  "password": "$2y$10$rPGCVj9zmYeTDJeguJZ0v.V6ZMLeMJfebSj2OmaAp0GnIr9HFHSEy",
+  "__v": 0,
+  "name": "Admin",
+  "isAdmin": true
+},
+{
+  "_id": {
+    "$oid": "685eced753197aba85dc04b4"
+  },
+  "empId": "002",
+  "name": "Faisal Liaqat",
+  "password": "$2b$10$Vnwv5iLifGAfHVTW2TGVNumYrCxfBF7kqPFRBFMmoE.F9OIAcWC9K",
+  "__v": 0
+}]
