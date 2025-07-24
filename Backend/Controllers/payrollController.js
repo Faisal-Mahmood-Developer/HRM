@@ -58,8 +58,7 @@ const getPayrolls = async (req, res) => {
     }
 };
 
-// Delete Employee
-// Example delete function
+
 const deletePyroll = async (req, res) => {
     const { id } = req.params;
     try {
@@ -103,40 +102,27 @@ const updatePayroll = async (req, res) => {
 
 
 const getPayrollsByYear = async (req, res) => {
-  try {
-    const { id } = req.params; // Now expecting MongoDB _id
-    const { year } = req.query;
+    try {
+        const { year } = req.query;
+        const empId = req.user.empId || req.user._id; // ✅ Get empId from JWT (middleware must attach this)
 
-    if (!id || !year) {
-      return res.status(400).json({ error: "Payroll ID and year are required" });
+        if (!empId || !year) {
+            return res.status(400).json({ error: "Employee ID and year are required" });
+        }
+
+        const regex = new RegExp(`^${year}-`);
+
+        const payrolls = await Payroll.find({
+            empId: String(empId),
+            month: { $regex: regex }
+        }).sort({ month: 1 });
+
+        res.json(payrolls);
+    } catch (error) {
+        console.error("Error fetching payrolls by year:", error.message);
+        res.status(500).json({ error: "Server error" });
     }
-
-    // Find the initial record by _id
-    const record = await Payroll.findById(id);
-    if (!record) {
-      return res.status(404).json({ error: "Payroll record not found" });
-    }
-
-    const empId = record.empId;
-
-    // Build regex to match month starting with year (e.g., "2025-")
-    const regex = new RegExp(`^${year}-`);
-
-    // Find all payrolls for this empId and year
-    const payrolls = await Payroll.find({
-      empId: String(empId),
-      month: { $regex: regex }
-    }).sort({ month: 1 });
-
-    res.json(payrolls);
-  } catch (error) {
-    console.error("Error fetching payrolls by year:", error.message);
-    res.status(500).json({ error: "Server error" });
-  }
 };
-
-
-
 
 
 module.exports = {

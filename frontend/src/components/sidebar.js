@@ -28,6 +28,7 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('loggedInUser');
+    localStorage.removeItem('authToken');
     navigate('/login');
   };
 

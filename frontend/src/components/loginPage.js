@@ -29,8 +29,11 @@ const LoginPage = ({ setLogin }) => {
             const data = await res.json();
             if (!res.ok) throw new Error(data.msg);
 
+            // ✅ Save token and user to localStorage
+            localStorage.setItem('authToken', data.token); // 🔐 Save token
+            localStorage.setItem('loggedInUser', JSON.stringify(data.user)); // 👤 Save user
+
             setSuccess(data.msg);
-            localStorage.setItem('loggedInUser', JSON.stringify(data.user));
             setLogin(true);
             navigate('/');
         } catch (err) {
@@ -100,27 +103,21 @@ const LoginPage = ({ setLogin }) => {
                                                     </div>
                                                 </div>
 
-                                                {/* Create Account Link */}
-                                                {/* <div className="col-sm-6">
-                          <a href="/createAccount" className="float-end text-primary">Create your Account</a>
-                        </div> */}
-
                                                 {/* Login Button */}
                                                 <div className="col-12">
-                                                    <button type="submit" className="btn px-4 float-end mt-4 text-white" style={{
-                                                        background: 'linear-gradient(135deg, #fc5c7d, #6a82fb)'
-                                                    }}>Login</button>
+                                                    <button type="submit" className="btn px-4 float-end mt-4 text-white"
+                                                        style={{ background: 'linear-gradient(135deg, #fc5c7d, #6a82fb)' }}>
+                                                        Login
+                                                    </button>
                                                 </div>
                                             </form>
                                         </div>
                                     </div>
 
-                                    {/* Right Side */}
+                                    {/* Right Side Image */}
                                     <div className="col-md-5 ps-0 d-none d-md-block">
-                                        <div className="form-right h-100  text-white text-center pt-5" style={{
-                                           background: 'linear-gradient(135deg, #fc5c7d, #6a82fb)'
-
-                                        }}>
+                                        <div className="form-right h-100 text-white text-center pt-5"
+                                            style={{ background: 'linear-gradient(135deg, #fc5c7d, #6a82fb)' }}>
                                             <img
                                                 src={hrmImage}
                                                 className="img-fluid rounded-circle my-logo w-75 mb-5"

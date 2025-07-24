@@ -24,9 +24,6 @@ const Dashboard = () => {
   };
 
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
-
-
-
   const [personalLeave, setPersonalLeave] = useState(0);
   const [empName, setEmpName] = useState("");
   const [uniqueId, setUniqueId] = useState(null);
@@ -80,49 +77,81 @@ const Dashboard = () => {
     fetchEmployeeLeaves();
   }, []);
 
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("loggedInUser"));
-    const empId = user?.empId;
-    if (!empId) return;
+useEffect(() => {
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  const token = localStorage.getItem("authToken");
+  const empId = user?.empId;
 
-    const fetchEmployee = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/employees/view`);
-        const data = await res.json();
-        const match = data.find(emp => emp.empId === empId);
-        if (match) {
-          setUniqueId(match._id);
+  if (!empId || !token) return;
+
+  const fetchEmployee = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/employees/view`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
         }
-      } catch (err) {
-        console.error("Failed to fetch employee unique ID", err);
+      });
+
+      const data = await res.json();
+      const match = data.find(emp => emp.empId === empId);
+      if (match) {
+        setUniqueId(match._id);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch employee unique ID", err);
+    }
+  };
 
-    fetchEmployee();
-  }, []);
+  fetchEmployee();
+}, []);
 
 
-  // fetching unique payroll 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("loggedInUser"));
+    const token = localStorage.getItem("authToken");
     const empId = user?.empId;
-    if (!empId) return;
+    if (!empId || !token) {
+      console.warn("Missing empId or token");
+      return;
+    }
 
     const uncPayroll = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/payroll/viewpayroll`);
+        const res = await fetch(`http://localhost:5000/api/payroll/viewpayroll`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Fetch failed:", res.status, text);
+          return;
+        }
+
         const data = await res.json();
-        const match = data.find(emp => emp.empId === empId);
+        console.log("Token:", token);
+        console.log("EmpID:", empId);
+        console.log("Fetched payroll data:", data);
+
+        const match = data.find(emp => emp.empId.trim() === empId.trim());
+        console.log("Matched payroll record:", match);
+
         if (match) {
           setUniqueIdpay(match._id);
+        } else {
+          console.warn("No matching payroll found for empId:", empId);
         }
       } catch (err) {
-        console.error("Failed to fetch employee unique ID", err);
+        console.error("Failed to fetch employee payroll", err);
       }
     };
 
     uncPayroll();
   }, []);
+
 
   const themeClass = darkMode ? "bg-dark text-white" : "";
 

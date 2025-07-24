@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 const PayrollDetail = () => {
-    const { id } = useParams(); // MongoDB _id from URL
+    // const { id } = useParams(); // MongoDB _id from URL
     const [payrolls, setPayrolls] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentYear = new Date().getFullYear();
@@ -13,7 +13,13 @@ const PayrollDetail = () => {
         const fetchPayrolls = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`http://localhost:5000/api/payroll/by-year/${id}?year=${selectedYear}`);
+                const token = localStorage.getItem('authToken');
+                const res = await fetch(`http://localhost:5000/api/payroll/by-year?year=${selectedYear}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
                 const data = await res.json();
 
                 if (Array.isArray(data)) {
@@ -33,7 +39,8 @@ const PayrollDetail = () => {
         };
 
         fetchPayrolls();
-    }, [id, selectedYear]);
+    }, [selectedYear]);
+
 
     return (
         <div className="container mt-5">

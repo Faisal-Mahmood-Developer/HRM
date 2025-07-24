@@ -9,6 +9,7 @@ const inventoryRoutes = require("./routes/inventoryRoutes");
 const createACc = require('./routes/createAccRoute')
 const loginPage = require('./routes/loginPage')
 const attendancePage = require('./routes/attendanceRoutes')
+require('dotenv').config();
 
 const app = express();
 connectDB(); // ✅ Don't forget to connect to MongoDB

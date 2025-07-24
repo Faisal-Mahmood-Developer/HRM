@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const employeeController = require('../Controllers/AddEmpControllers');
 const { uploadFields } = require('../midldlewares/multer');
+const protect = require('../midldlewares/authMiddleware');
 
 router.post('/sendData', uploadFields, employeeController.createEmployee);
 router.get('/view', employeeController.getAllEmployees);
