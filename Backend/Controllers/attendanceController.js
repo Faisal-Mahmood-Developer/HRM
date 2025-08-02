@@ -8,8 +8,13 @@ const normalizeDate = (date) => {
 
 exports.addAttendance = async (req, res) => {
   const { empId, name, date, status } = req.body;
+
   try {
     const normalizedDate = normalizeDate(date);
+        // ⛔ Prevent admin from adding their own attendance
+    if (req.user && req.user.isAdmin && req.user.empId === empId) {
+      return res.status(403).json({ msg: "Admins cannot add their own attendance" });
+    }
 
     // Check if attendance already exists for the empId on the normalized date
     const exists = await Attendance.findOne({ empId, date: normalizedDate });
@@ -53,9 +58,7 @@ exports.getDailySummary = async (req, res) => {
       total: records.length,
       present: records.filter(r => ['Online', 'Present'].includes(r.status)).length,
       offline: records.filter(r => r.status === 'Offline').length,
-      leave: records.filter(r => r.status === 'Leave').length,
-     wfh: records.filter(r => r.status === 'Work from Home').length
-
+      wfh: records.filter(r => r.status === 'Work from Home').length
     };
 
     res.json(summary);
@@ -86,24 +89,7 @@ exports.deleteAttendance = async (req, res) => {
   }
 };
 
-exports.getAllLeaves = async (req, res) => {
-  const { empId } = req.query;
-
-  try {
-    const filter = { status: "Leave" };
-    if (empId) {
-      filter.empId = empId;
-    }
-
-    const leaveRecords = await Attendance.find(filter);
-    res.json(leaveRecords);
-  } catch (err) {
-    res.status(500).json({ msg: err.message });
-  }
-};
-
-
-// 📌 GET all Leave and Work from Home records for the current year
+// 📌 GET Work from Home records only (Leave removed)
 exports.getYearlyRecords = async (req, res) => {
   const { empId } = req.query;
 
@@ -119,7 +105,7 @@ exports.getYearlyRecords = async (req, res) => {
     const records = await Attendance.find({
       empId,
       date: { $gte: start, $lte: end },
-      status: { $in: ["Leave", "Work from Home"] }
+      status: "Work from Home"
     });
 
     res.json(records);
@@ -127,5 +113,3 @@ exports.getYearlyRecords = async (req, res) => {
     res.status(500).json({ msg: err.message });
   }
 };
-
-

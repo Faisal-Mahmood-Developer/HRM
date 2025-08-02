@@ -6,6 +6,7 @@ const ViewDetail = () => {
   const { id } = useParams();
   const [empData, setEmpData] = useState(null);
   const [loading, setLoading] = useState(true);
+   const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
 
   const openBase64InNewTab = (base64Data) => {
@@ -13,22 +14,36 @@ const ViewDetail = () => {
     win.document.write(`<iframe src="${base64Data}" frameborder="0" style="width:100%;height:100%"></iframe>`);
   };
 
-  useEffect(() => {
-    const fetchEmpDetail = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/employees/view`);
-        const data = await res.json();
-        const filtered = data.find(emp => emp._id === id);
-        setEmpData(filtered);
-      } catch (err) {
-        console.error("Failed to fetch employee detail", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const fetchEmployee = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
 
-    fetchEmpDetail();
-  }, [id]);
+      const response = await fetch(`http://localhost:5000/api/employees/view-token`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch employee');
+      }
+
+      const data = await response.json();
+      setEmpData(data);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
+  };
+
+  fetchEmployee();
+});
+
+
 
   return (
     <div className="container mt-5">
@@ -123,7 +138,6 @@ const ViewDetail = () => {
               <button className="btn btn-secondary" onClick={() => navigate(-1)}>
                 ← Back
               </button>
-              
             </div>
           </div>
         ) : (

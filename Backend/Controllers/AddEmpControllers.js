@@ -86,3 +86,25 @@ exports.deleteEmp = async (req, res) => {
     res.status(500).json({ message: 'Server error while deleting employee' });
   }
 };
+
+
+exports.getUniq_Emp = async (req, res) => {
+  try {
+    const empId = req.user.empId || req.user._id;
+
+    if (!empId) {
+      return res.status(400).json({ error: 'Employee ID not found in token' });
+    }
+
+    const employee = await Employee.findOne({ empId: String(empId) });
+
+    if (!employee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
+
+    res.status(200).json(employee);
+  } catch (error) {
+    console.error("Error fetching employee:", error.message);
+    res.status(500).json({ message: 'Failed to fetch employee', error: error.message });
+  }
+};

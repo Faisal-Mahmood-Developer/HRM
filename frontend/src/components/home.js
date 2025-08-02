@@ -15,6 +15,7 @@ const Dashboard = () => {
   const [darkMode, setDarkMode] = useState(false);
 
 
+
   const getTodayDate = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -24,88 +25,112 @@ const Dashboard = () => {
   };
 
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
-  const [personalLeave, setPersonalLeave] = useState(0);
+  const [approvedLeaveCount, setApprovedLeaveCount] = useState(0);
+  const [personalLeave, setPersonalLeave] = useState(0); // ✅ Add this
   const [empName, setEmpName] = useState("");
   const [uniqueId, setUniqueId] = useState(null);
   const [uniqueIdpay, setUniqueIdpay] = useState(null);
+  const [approvedLeaves, setApprovedLeaves] = useState([]);
+
+  // for all 
 
   useEffect(() => {
-    const fetchAttendance = async () => {
-      setLoading(true);
+    const fetchAllDashboardData = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/attendance/view?date=${selectedDate}`);
-        const data = await res.json();
-        setAttendanceList(data);
+        setLoading(true);
+
+        const [attendanceRes, summaryRes, leavesRes] = await Promise.all([
+          fetch(`http://localhost:5000/api/attendance/view?date=${selectedDate}`),
+          fetch(`http://localhost:5000/api/attendance/summary?date=${selectedDate}`),
+          fetch(`http://localhost:5000/api/leaves/approved-leaves-details?date=${selectedDate}`)
+        ]);
+
+        const [attendanceData, summaryData, leaveData] = await Promise.all([
+          attendanceRes.json(),
+          summaryRes.json(),
+          leavesRes.json()
+        ]);
+
+        setSummary(summaryData);
+        setApprovedLeaveCount(leaveData.count || 0);
+        setApprovedLeaves(leaveData.leaves || []);
+
+        // Merge leaves not in attendance list
+        const attendanceEmpIds = attendanceData.map(rec => rec.empId);
+        const filteredLeaves = leaveData.leaves.filter(
+          leave => !attendanceEmpIds.includes(leave.empId)
+        );
+
+        const mergedList = [
+          ...attendanceData,
+          ...filteredLeaves.map(leave => ({
+            ...leave,
+            date: selectedDate,
+            status: "Leave"
+          }))
+        ];
+
+        setAttendanceList(mergedList);
       } catch (err) {
-        console.error("Failed to fetch attendance", err);
+        console.error("Error loading dashboard data", err);
         setAttendanceList([]);
+        setSummary({ total: 0, present: 0, leave: 0, wfh: 0 });
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchSummary = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/attendance/summary?date=${selectedDate}`);
-        const data = await res.json();
-        setSummary(data);
-      } catch (err) {
-        console.error("Failed to fetch summary", err);
-      }
-    };
-
-    fetchAttendance();
-    fetchSummary();
+    fetchAllDashboardData();
   }, [selectedDate]);
 
+
+  // Show name instantly
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("loggedInUser"));
-    if (!user?.empId) return;
+    if (user?.name) {
+      setEmpName(user.name);
+    }
+  }, []);
 
-    setEmpName(user.name); // ✅ set name early
+  // Fetch from API
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("loggedInUser"));
+    const token = localStorage.getItem("authToken");
+    const empId = user?.empId;
 
-    const fetchEmployeeLeaves = async () => {
+    if (!empId || !token) return;
+
+    const fetchEmployee = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/attendance/leaves/all?empId=${user.empId}`);
+        const res = await fetch(`http://localhost:5000/api/employees/view`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
         const data = await res.json();
-        setPersonalLeave(data.length);
+        console.log("Employees fetched:", data);
+        console.log("Searching for empId:", empId);
+
+        const match = data.find(emp => String(emp.empId).trim() === String(empId).trim());
+        console.log("Matched employee:", match);
+
+        if (match) {
+          setUniqueId(match._id);
+          setEmpName(match.name);
+          console.log(match._id);
+          
+        }
       } catch (err) {
-        console.error("Failed to fetch employee leave records", err);
+        console.error("Failed to fetch employee unique ID", err);
       }
     };
 
-    fetchEmployeeLeaves();
+    fetchEmployee();
   }, []);
 
-useEffect(() => {
-  const user = JSON.parse(localStorage.getItem("loggedInUser"));
-  const token = localStorage.getItem("authToken");
-  const empId = user?.empId;
-
-  if (!empId || !token) return;
-
-  const fetchEmployee = async () => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/employees/view`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
-        }
-      });
-
-      const data = await res.json();
-      const match = data.find(emp => emp.empId === empId);
-      if (match) {
-        setUniqueId(match._id);
-      }
-    } catch (err) {
-      console.error("Failed to fetch employee unique ID", err);
-    }
-  };
-
-  fetchEmployee();
-}, []);
 
 
   useEffect(() => {
@@ -137,7 +162,7 @@ useEffect(() => {
         console.log("Fetched payroll data:", data);
 
         const match = data.find(emp => emp.empId.trim() === empId.trim());
-        console.log("Matched payroll record:", match);
+        // console.log("Matched payroll record:", match);
 
         if (match) {
           setUniqueIdpay(match._id);
@@ -159,6 +184,34 @@ useEffect(() => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-GB");
   };
+  // for indiviual 
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    const fetchMyLeaves = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/leaves/my`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+
+        // Count only approved leaves
+        const approvedLeaves = data.filter(leave => leave.status === "Approved");
+        setPersonalLeave(approvedLeaves.length);
+      } catch (err) {
+        console.error("Failed to fetch personal leave records", err);
+        setPersonalLeave(0);
+      }
+    };
+
+    fetchMyLeaves();
+  }, []);
+
 
   return (
     <div className={`container-fluid mt-5 ${themeClass}`}>
@@ -182,7 +235,8 @@ useEffect(() => {
 
       <div className="row mb-4">
         {["Total Employees", "Present", "Leave", "Work from Home"].map((label, index) => {
-          const value = [summary.total, summary.present, summary.leave, summary.wfh][index];
+          const value = [summary.total, summary.present, approvedLeaveCount, summary.wfh][index];
+
           const classes = ["primary", "success", "warning text-dark", "info text-dark"];
           return (
             <div className="col-md-3" key={label}>
@@ -219,7 +273,7 @@ useEffect(() => {
                     </thead>
                     <tbody>
                       {attendanceList.map((rec, index) => (
-                        <tr key={rec._id}>
+                        <tr key={rec._id || index}>
                           <td>{index + 1}</td>
                           <td>{formatDate(rec.date)}</td>
                           <td>{rec.empId}</td>
@@ -262,6 +316,7 @@ useEffect(() => {
                     <span className="badge bg-secondary">Remaining</span>
                   </div>
                 </div>
+
                 <div className="col-md-6">
                   <div className="card border-danger text-center p-3">
                     <h6>Name</h6>

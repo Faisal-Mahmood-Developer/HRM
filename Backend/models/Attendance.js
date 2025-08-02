@@ -6,7 +6,7 @@ const attendanceSchema = new mongoose.Schema({
   date: { type: String, required: true }, // Format: YYYY-MM-DD
   status: {
     type: String,
-    enum: ["Present", "Leave", "Work from Home"],
+    enum: ["Present", "Work from Home"],
     default: "Present"
   }
 });

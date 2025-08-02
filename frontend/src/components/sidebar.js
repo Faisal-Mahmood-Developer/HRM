@@ -282,6 +282,36 @@ const Sidebar = ({ darkMode, setDarkMode }) => {
             </div>
 
           </li>
+
+          {/* leave management  */}
+          <li className="nav-item w-100">
+            <a
+              className={`nav-link d-flex align-items-center ${sidebarVisible ? 'justify-content-start -2 text-white' : 'justify-content-center text-dark'}`}
+              data-bs-toggle="collapse"
+              href="#leave"
+              role="button"
+            >
+              <i className={`fas fa-calendar-alt ${sidebarVisible ? 'text-white' : 'text-dark'}`}></i>
+              {sidebarVisible && <span className="ms-2">Leave Management</span>}
+            </a>
+            <div className="collapse ps-2" id="leave">
+              <Link
+                className={`nav-link d-flex align-items-center ${sidebarVisible ? 'text-white' : 'text-dark'}`}
+                to="/leave"
+              >
+                <i className={`fas fa-list ${sidebarVisible ? 'text-white' : 'text-dark'}`}></i>
+                {sidebarVisible && <span className="ms-2">Add Leaves</span>}
+              </Link>
+              <Link
+                className={`nav-link d-flex align-items-center ${sidebarVisible ? 'text-white' : 'text-dark'}`}
+                to="/admin/requests"
+              >
+                <i className={`fas fa-list ${sidebarVisible ? 'text-white' : 'text-dark'}`}></i>
+                {sidebarVisible && <span className="ms-2">View Details</span>}
+              </Link>
+            </div>
+
+          </li>
         </ul>
       </div>
 

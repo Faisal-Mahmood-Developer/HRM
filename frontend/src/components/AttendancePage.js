@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 
 const AttendancePage = () => {
@@ -18,12 +17,9 @@ const AttendancePage = () => {
     const [selectedDate, setSelectedDate] = useState(getTodayDate());
 
     const [yearlyRecords, setYearlyRecords] = useState([]);
-
     const [yearlyEmpId, setYearlyEmpId] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
-
-
 
     function getTodayDate() {
         const today = new Date();
@@ -67,17 +63,29 @@ const AttendancePage = () => {
         try {
             const res = await fetch(`http://localhost:5000/api/attendance/view?date=${date}`);
             const data = await res.json();
+
             const user = JSON.parse(localStorage.getItem("loggedInUser"));
 
-            if (user?.isAdmin) {
-                setAttendanceList(data);
+            if (Array.isArray(data)) {
+                if (user?.isAdmin) {
+                    setAttendanceList(data);
+                } else {
+                    setAttendanceList(data.filter(rec => rec.empId === user.empId));
+                }
             } else {
-                setAttendanceList(data.filter(rec => rec.empId === user.empId));
+                console.error("Unexpected response format", data);
+                setAttendanceList([]); // fallback
             }
         } catch (err) {
             console.error("Failed to fetch attendance", err);
+            setAttendanceList([]); // fallback on error
         }
     };
+
+
+
+
+
 
     const handleCheckYearly = async (empId) => {
         if (!empId) {
@@ -85,7 +93,6 @@ const AttendancePage = () => {
             return;
         }
 
-        // Find employee and update name in formData
         const emp = employees.find(emp => emp.empId === empId);
         if (emp) {
             setFormData(prev => ({ ...prev, name: emp.name }));
@@ -101,7 +108,6 @@ const AttendancePage = () => {
             showAlert("Failed to load yearly data", "danger");
         }
     };
-
 
     const handleDelete = (id) => {
         setDeleteId(id);
@@ -127,7 +133,6 @@ const AttendancePage = () => {
         }
     };
 
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -139,6 +144,52 @@ const AttendancePage = () => {
             }
         }
     };
+
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+
+    //     const normalizedDate = new Date(formData.date).toISOString().split("T")[0];
+
+    //     const duplicate = attendanceList.find(
+    //         (rec) =>
+    //             rec.empId === formData.empId &&
+    //             new Date(rec.date).toISOString().split("T")[0] === normalizedDate &&
+    //             (!isEditing || rec._id !== editingId)
+    //     );
+
+    //     if (duplicate) {
+    //         showAlert("Attendance already marked for this employee on the selected date.", "warning");
+    //         return;
+    //     }
+
+    //     const url = isEditing
+    //         ? `http://localhost:5000/api/attendance/update/${editingId}`
+    //         : "http://localhost:5000/api/attendance/add";
+
+    //     const method = isEditing ? "PUT" : "POST";
+
+    //     try {
+    //         const res = await fetch(url, {
+    //             method,
+    //             headers: { "Content-Type": "application/json" },
+    //             body: JSON.stringify(formData),
+    //         });
+
+    //         if (!res.ok) throw new Error("Failed to save attendance");
+
+    //         showAlert(`Attendance ${isEditing ? "updated" : "added"} successfully!`, "success");
+
+    //         const refreshedDate = formData.date;
+    //         setFormData({ date: "", empId: "", name: "", status: "Present" });
+    //         setIsEditing(false);
+    //         setEditingId(null);
+    //         setSelectedDate(refreshedDate);
+    //         await fetchAttendance(refreshedDate);
+    //     } catch (err) {
+    //         console.error(err);
+    //         showAlert("Failed to save attendance", "danger");
+    //     }
+    // };
 
 
     const handleSubmit = async (e) => {
@@ -165,9 +216,14 @@ const AttendancePage = () => {
         const method = isEditing ? "PUT" : "POST";
 
         try {
+            const token = localStorage.getItem("authToken"); // ✅ get token
+
             const res = await fetch(url, {
                 method,
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`, // ✅ pass token
+                },
                 body: JSON.stringify(formData),
             });
 
@@ -205,7 +261,6 @@ const AttendancePage = () => {
         setEditingId(null);
         showAlert("Edit cancelled.", "warning");
     };
-
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -270,7 +325,6 @@ const AttendancePage = () => {
                                         required
                                     >
                                         <option value="Present">Present</option>
-                                        <option value="Leave">Leave</option>
                                         <option value="Work from Home">Work from Home</option>
                                     </select>
                                 </div>
@@ -292,7 +346,7 @@ const AttendancePage = () => {
                 </div>
 
                 <div className="col-md-9">
-                    <div className="d-flex justify-content-end  mb-3">
+                    <div className="d-flex justify-content-end mb-3">
                         <input
                             type="date"
                             className="form-control"
@@ -304,10 +358,9 @@ const AttendancePage = () => {
                     <div className="card shadow">
                         <div className="card-header d-flex justify-content-between align-items-center">
                             <h5 className="mb-0">Attendance Records</h5>
-
                             {isAdmin && (
                                 <div className="d-flex align-items-center">
-                                    <span className="me-2">Check Yearly Leave / WFH:</span>
+                                    <span className="me-2">Check Yearly WFH:</span>
                                     <input
                                         type="text"
                                         className="form-control form-control-sm me-2"
@@ -327,7 +380,6 @@ const AttendancePage = () => {
                             )}
                         </div>
 
-
                         {alert.message && (
                             <div className={`alert alert-${alert.type} alert-dismissible fade show text-center`} role="alert">
                                 {alert.message}
@@ -345,22 +397,20 @@ const AttendancePage = () => {
                                             <th>Emp ID</th>
                                             <th>Name</th>
                                             <th>Status</th>
-                                            {isAdmin && (
-                                                <th>Action</th>
-                                            )}
+                                            {isAdmin && <th>Action</th>}
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {attendanceList.map((rec, index) => (
-                                            <tr key={rec._id}>
-                                                <td>{index + 1}</td>
-                                                <td>{formatDate(rec.date)}</td>
-                                                <td>{rec.empId}</td>
-                                                <td>{rec.name}</td>
-                                                <td>{rec.status}</td>
-                                                <td>
+                                        {Array.isArray(attendanceList) && attendanceList.length > 0 ? (
+                                            attendanceList.map((rec, index) => (
+                                                <tr key={rec._id}>
+                                                    <td>{index + 1}</td>
+                                                    <td>{formatDate(rec.date)}</td>
+                                                    <td>{rec.empId}</td>
+                                                    <td>{rec.name}</td>
+                                                    <td>{rec.status}</td>
                                                     {isAdmin && (
-                                                        <>
+                                                        <td>
                                                             <i
                                                                 className="far fa-edit me-2 text-primary"
                                                                 style={{ cursor: 'pointer' }}
@@ -371,13 +421,17 @@ const AttendancePage = () => {
                                                                 style={{ cursor: 'pointer' }}
                                                                 onClick={() => handleDelete(rec._id)}
                                                             ></i>
-
-                                                        </>
+                                                        </td>
                                                     )}
-                                                </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={isAdmin ? 6 : 5}>No attendance records found.</td>
                                             </tr>
-                                        ))}
+                                        )}
                                     </tbody>
+
                                 </table>
                             </div>
                         </div>
@@ -403,12 +457,6 @@ const AttendancePage = () => {
                                 {yearlyRecords.length > 0 ? (
                                     <>
                                         <div className="mb-3">
-                                            <strong>Total Leaves:</strong>{" "}
-                                            {
-                                                yearlyRecords.filter(r => r.status === "Leave").length
-                                            }{" "}
-                                            / <strong>Allowed:</strong> 14
-                                            <br />
                                             <strong>Total Work From Home:</strong>{" "}
                                             {
                                                 yearlyRecords.filter(r => r.status === "Work from Home").length
@@ -451,6 +499,7 @@ const AttendancePage = () => {
                     </div>
                 </div>
             )}
+
             <div className="modal fade" id="deleteModal" tabIndex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
                     <div className="modal-content">
@@ -468,8 +517,6 @@ const AttendancePage = () => {
                     </div>
                 </div>
             </div>
-
-
         </div>
     );
 };

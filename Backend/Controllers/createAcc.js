@@ -5,9 +5,9 @@ const User = require('../models/User');
 
 // ✅ POST /api/account/create-account
 const CreateAcc = async (req, res) => {
-    const { empId, password, name } = req.body;
+    const { empId, password, name, email } = req.body;
 
-    if (!empId || !password || !name) {
+    if (!empId || !password || !name || !email) {
         return res.status(400).json({ msg: 'All fields are required' });
     }
 
@@ -18,7 +18,8 @@ const CreateAcc = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ empId, name, password: hashedPassword });
+        const user = new User({ empId, name, email, password: hashedPassword });
+
         await user.save();
 
         res.status(201).json({ msg: '✅ Account created successfully' });

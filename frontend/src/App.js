@@ -24,7 +24,8 @@ import AttendancePage from "./components/AttendancePage";
 import ViewDetail from "./components/ViewDetail";
 import ChangePassword from "./components/ChangePassword";
 import PayrollDetail from './components/PayrollDetail';
-
+import LeaveRequest from "./components/leaveManage";
+import AdminLeaveManager from "./components/LeaveRequestsAdmin";
 function App() {
   const [login, setLogin] = useState(() => !!localStorage.getItem('loggedInUser'));
   const [darkMode, setDarkMode] = useState(() => {
@@ -73,6 +74,9 @@ function App() {
           <Route path="/viewDetail/:id" element={<ViewDetail />} />
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/viewPayroll/:id" element={<PayrollDetail />} />
+          <Route path="/leave" element={<LeaveRequest />} />
+          <Route path="/admin/requests" element={<AdminLeaveManager  />} />
+
         </Route>
       </Routes>
     </BrowserRouter>

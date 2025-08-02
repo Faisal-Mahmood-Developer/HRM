@@ -9,5 +9,8 @@ router.get('/view', employeeController.getAllEmployees);
 router.delete('/delete/:id', employeeController.deleteEmp);
 router.put('/update/:id', uploadFields, employeeController.updateEmployee);
 router.get('/editEmp/:id', employeeController.getEmployeeById);
+// 👇 Secure endpoint to view own profile
+router.get('/view-token', protect, employeeController.getUniq_Emp);
+
 
 module.exports = router;

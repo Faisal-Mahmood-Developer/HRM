@@ -5,7 +5,8 @@ const CreateAccountPage = () => {
     const navigate = useNavigate();
 
     const [employees, setEmployees] = useState([]);
-    const [formData, setFormData] = useState({ empId: '', password: '' });
+    const [formData, setFormData] = useState({ empId: '', name: '', email: '', password: '' });
+
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
@@ -31,9 +32,11 @@ const CreateAccountPage = () => {
             setFormData({
                 ...formData,
                 empId: value,
-                name: selectedEmp ? selectedEmp.name : ''
+                name: selectedEmp ? selectedEmp.name : '',
+                email: selectedEmp ? selectedEmp.email : ''
             });
-        } else {
+        }
+        else {
             setFormData({
                 ...formData,
                 [name]: value
@@ -54,7 +57,7 @@ const CreateAccountPage = () => {
                 body: JSON.stringify(formData)
             });
 
-            setTimeout(() => navigate('/'), 1500); 
+            setTimeout(() => navigate('/'), 1500);
         } catch (err) {
             setError(err.response?.data?.msg || 'Registration failed');
         }
@@ -92,6 +95,17 @@ const CreateAccountPage = () => {
                                     name="name"
                                     className="form-control"
                                     value={formData.name}
+                                    readOnly
+                                />
+                            </div>
+
+                            <div className="form-group mb-3">
+                                <label>Employee Email</label>
+                                <input
+                                    type="text"
+                                    name="email"
+                                    className="form-control"
+                                    value={formData.email}
                                     readOnly
                                 />
                             </div>

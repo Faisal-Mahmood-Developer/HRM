@@ -9,6 +9,7 @@ const inventoryRoutes = require("./routes/inventoryRoutes");
 const createACc = require('./routes/createAccRoute')
 const loginPage = require('./routes/loginPage')
 const attendancePage = require('./routes/attendanceRoutes')
+const leaveRoutes = require('./routes/leave.routes');
 require('dotenv').config();
 
 const app = express();
@@ -32,6 +33,7 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/auth", createACc);
 app.use('/api/home', loginPage);
 app.use('/api/attendance', attendancePage);
+app.use('/api/leaves', leaveRoutes);
 
 
 const PORT = process.env.PORT || 5000;
